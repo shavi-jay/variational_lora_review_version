@@ -224,7 +224,7 @@ class MolEForSequenceClassificationLikelihoodLoss(MolEForSequenceClassificationB
         )
 
 
-DEFAULT_MOLE_PATH = path_to_local_data("pretrained_mole/mole_model_state_dict.pth")
+DEFAULT_MOLE_PATH = path_to_local_data("pretrained_mole/mole_model_state_dict.ckpt")
 
 
 class MolEDeepchem(HuggingFaceModel):
