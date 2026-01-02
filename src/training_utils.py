@@ -30,10 +30,6 @@ from src.splitter import PseudoScaffoldSplitter
 from src.optimizer import Lamb
 from src.utils import create_file_path_string
 from src.dataset_loaders import (
-    load_clintox,
-    load_toxcast,
-    load_bbbp,
-    load_tox21,
     load_adme_hclint,
     load_adme_lm_clint,
     load_adme_perm,
@@ -153,7 +149,7 @@ def get_load_func(dataset: str):
     except:
         if dataset not in DATASET_TO_LOAD_FUNCTION.keys():
             raise ValueError(f"Dataset {dataset} not recognised")
-        return
+        raise ValueError(f"Error getting load function for dataset {dataset}")
 
 
 def get_finetuning_datasets(
