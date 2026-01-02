@@ -228,7 +228,7 @@ class UncertaintyQuantificationBasicSingle(UncertaintyQuantificationBase):
         pass
 
     def _add_finetune_method(self):
-        if self.config.finetune_type is "lora":
+        if self.config.finetune_type == "lora":
             self._lora_method()
 
     def predict_mean_and_std_on_batch(self, inputs, compute_std: bool = False):
