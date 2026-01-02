@@ -51,10 +51,6 @@ DATASET_TO_LOAD_FUNCTION = {
     "adme_lm_clint": load_adme_lm_clint,
     "adme_perm": load_adme_perm,
     "bace_classification": dc.deepchem.molnet.load_bace_classification,
-    "bbbp": load_bbbp,
-    "clintox": load_clintox,
-    "toxcast": load_toxcast,
-    "tox21": load_tox21,
 }
 
 
