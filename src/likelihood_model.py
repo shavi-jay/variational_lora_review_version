@@ -16,20 +16,9 @@ from transformers.utils import (
     add_code_sample_docstrings,
 )
 
+from src.basic_classifier_heads import ClassifierHeadConfig
 from src.training_utils import get_activation_function
 from src.mole.deberta.ops import StableDropout, ACT2FN
-
-@dataclass
-class ClassifierHeadConfig:
-    hidden_size: int = 768
-    classifier_hidden_size: int = 768
-    classifier_dropout_prob: float | None = 0.2
-    classifier_activation_func: str = "relu"
-    classifier_skip_connection: bool = True
-    classifier_hidden_layers: int = 2  # only for molformer classifier head
-    hidden_dropout_prob: float = 0.1
-    num_labels: int = 1
-    problem_type: str | None = "regression"
 
 @dataclass
 class LikelihoodSequenceClassifierOutput(ModelOutput):
@@ -39,7 +28,6 @@ class LikelihoodSequenceClassifierOutput(ModelOutput):
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     std_logits: Optional[torch.FloatTensor] = None
 
-
 def forward_loss(
     logits: torch.FloatTensor,
     std_logits: Optional[torch.FloatTensor],
@@ -47,11 +35,17 @@ def forward_loss(
     problem_type: str = "",
     num_labels: int = 1,
 ):
+    if labels is None:
+        raise ValueError("Labels must be provided for loss computation")
     if problem_type == "regression":
         loss_fct = gaussian_negative_log_likelihood
         if num_labels != 1:
             raise ValueError("Must have num_labels = 1")
         else:
+            if std_logits is None:
+                raise ValueError(
+                    "std_logits must be provided for regression likelihood loss computation"
+                )
             loss = loss_fct(mean_output=logits, std_output=std_logits, labels=labels)
     elif problem_type == "single_label_classification":
         loss_fct = CrossEntropyLoss()
@@ -255,6 +249,8 @@ class MolformerLikelihoodClassificationHead(nn.Module):
             + [nn.Linear(config.classifier_hidden_size, config.classifier_hidden_size)]
             * (config.classifier_hidden_layers - 1)
         )
+        if config.classifier_dropout_prob is None:
+            raise ValueError("classifier_dropout_prob must be specified")
         self.dropouts = nn.ModuleList(
             [nn.Dropout(config.classifier_dropout_prob)]
             * config.classifier_hidden_layers
@@ -302,6 +298,8 @@ class MolformerLikelihoodClassificationHeadCalibrated(nn.Module):
             + [nn.Linear(config.classifier_hidden_size, config.classifier_hidden_size)]
             * (config.classifier_hidden_layers - 1)
         )
+        if config.classifier_dropout_prob is None:
+            raise ValueError("classifier_dropout_prob must be specified")
         self.dropouts = nn.ModuleList(
             [nn.Dropout(config.classifier_dropout_prob)]
             * config.classifier_hidden_layers
