@@ -9,7 +9,9 @@ This is the codebase for the Journal of Cheminformatic submission: "Variational 
 
 Check Python 3.10:
 
-```python3.10 --version```
+```
+python3.10 --version
+```
 
 
 If missing (Ubuntu/Debian example):
@@ -23,7 +25,9 @@ sudo apt-get install -y python3.10 python3.10-venv
 
 Create the virtual environment named vlora:
 
-```python3.10 -m venv vlora```
+```
+python3.10 -m venv vlora
+```
 
 #### 2) Activate the vlora environment (Python 3.10)
 
