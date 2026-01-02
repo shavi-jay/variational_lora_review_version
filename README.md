@@ -23,16 +23,16 @@ sudo apt-get install -y python3.10 python3.10-venv
 
 #### 1) Set up venv on Linux
 
-Create the virtual environment named vlora:
+Create the virtual environment named `variational_lora`:
 
 ```
-python3.10 -m venv vlora
+python3.10 -m venv variational_lora
 ```
 
-#### 2) Activate the vlora environment (Python 3.10)
+#### 2) Activate the variational_lora environment (Python 3.10)
 
 ```
-source vlora/bin/activate
+source variational_lora/bin/activate
 python --version  # should show Python 3.10.x
 ```
 
