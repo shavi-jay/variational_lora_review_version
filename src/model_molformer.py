@@ -38,7 +38,7 @@ from src.likelihood_model import (
     MolformerLikelihoodClassificationHead,
     MolformerLikelihoodClassificationHeadCalibrated,
 )
-from src.classifier_heads import (
+from src.basic_classifier_heads import (
     RobertaClassificationHeadCustomActivation,
     MolformerClassificationHead,
     ClassifierHeadConfig,

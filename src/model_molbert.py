@@ -10,7 +10,7 @@ from src.molbert.base import MolbertPretrainedModel, BertConfigExtras
 from src.molbert.tokenizer import MolbertTokenizer
 from src.utils import create_file_path_string, path_to_local_data
 from src.training_utils import get_activation_function
-from src.classifier_heads import (
+from src.basic_classifier_heads import (
     RobertaClassificationHeadCustomActivation,
     MolformerClassificationHead,
 )
