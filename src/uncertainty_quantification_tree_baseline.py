@@ -202,22 +202,3 @@ def baseline_tree_uq(
         )
 
     return scores
-
-
-if __name__ == "__main__":
-    config = UncertaintyQuantificationBaseConfig(
-        dataset="adme_perm",
-        task_number=0,
-        splitter_type="scaffold",
-        featurizer_type="ECFP",
-        seed=1,
-        model_type="ngboost",
-    )
-
-    uq_model = UncertaintyQuantificationBaseline(config)
-
-    print("Expected Calibration Error (ECE):")
-    print(uq_model.regression_expected_calibration_error(dataset=uq_model.test_dataset))
-
-    print("Negative Log Likelihood (NLL):")
-    print(uq_model.gaussian_negative_log_likelihood(dataset=uq_model.test_dataset))

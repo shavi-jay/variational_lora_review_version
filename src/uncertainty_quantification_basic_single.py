@@ -293,10 +293,7 @@ def uncertainty_quantification_basic_single_model_calibration_levels(
     config = UncertaintyQuantificationBasicSingleConfig(**kwargs)
     output = {}
 
-    if problem_type == "classification":
-        raise NotImplementedError("Classification not implemented")
-
-    elif problem_type == "regression":
+    if problem_type == "regression":
         uncertainty_quantifier = UncertaintyQuantificationBasicSingleRegression(config)
         print(
             f"Currrent calibration coeff: {uncertainty_quantifier.finetune_model.model.classifier.calibration_coeff.data}"
@@ -319,5 +316,7 @@ def uncertainty_quantification_basic_single_model_calibration_levels(
                     )
                 if result is not None:
                     output.update({f"{calibration_coeff}_{metric}_score": result})
+    else:
+        raise ValueError(f"Problem type {problem_type} not recognised.")
 
     return output

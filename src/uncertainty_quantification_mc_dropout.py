@@ -1,101 +1,88 @@
-from typing import Union, Dict, Callable
+from typing import Optional, Iterable, Callable, Dict, Literal
 from dataclasses import dataclass, field
-import torch
-import torch.nn as nn
+import numpy as np
 import json
 import os
 
-import numpy as np
+import torch
+import torch.nn as nn
 
 from transformers.models.roberta.modeling_roberta import (
     RobertaForSequenceClassification,
 )
-from deepchem.data import Dataset
-from peft import get_peft_model, LoraConfig, TaskType
-
 from transformers.modeling_outputs import SequenceClassifierOutput
+
+from deepchem.data import Dataset
 from deepchem.utils.typing import OneOrMany
 
-from src.uncertainty_quantification import (
-    UncertaintyQuantificationBaseConfig,
-    UncertaintyQuantificationBase,
-)
-from src.uncertainty_quantification_regression import (
-    UncertaintyQuantificationRegressionHF,
-    UncertaintyRegressionPredictionOutput,
-    generate_reliability_plot_regression,
-)
-from src.variational_inference.variational_layer import MFVILinear
-from src.variational_model import (
-    MFVIConfig,
-    VariationalMolformerSingle,
-    VariationalMolbertSingle,
-    VariationalMoleSingle,
-)
+from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
 
-from src.finetune_mfvi_single import (
-    _replace_linear_submodule,
-    get_mfvi_lora_target_modules,
-    _replace_all_linear_submodules,
+from src.dataset_tasks import get_dataset_task
+from src.utils import (
+    tensor_to_numpy,
+    set_seed,
+    create_file_path_string,
+    load_yaml_config,
 )
-
+from src.training_utils import get_finetuning_datasets, get_optimizer
+from src.deepchem_hf_models import HuggingFaceModel
 from src.model_molformer import (
+    MolformerDeepchem,
     MolformerConfig,
     MolformerForSequenceClassification,
     MolformerForSequenceClassificationLikelihoodLoss,
 )
-from src.likelihood_model import (
-    RobertaLikelihoodClassificationHead,
-    RobertaLikelihoodClassificationHeadCustomActivation,
-    MolformerLikelihoodClassificationHead,
-)
 from src.model_molbert import (
     MolbertForSequenceClassification,
     MolbertForSequenceClassificationLikelihoodLoss,
+    MolbertDeepchem,
     MolbertConfig,
 )
 from src.model_mole import (
     MolEForSequenceClassification,
     MolEForSequenceClassificationLikelihoodLoss,
+    MolEDeepchem,
     MolEExtraConfig,
 )
 
-from src.training_utils import get_optimizer
-from src.utils import create_file_path_string, tensor_to_numpy
+from src.uncertainty_quantification_regression import (
+    UncertaintyQuantificationRegressionHF,
+    UncertaintyRegressionPredictionOutput,
+)
 
-from src.dataset_tasks import get_dataset_task
+from src.uncertainty_quantification import (
+    UncertaintyQuantificationBaseConfig,
+    UncertaintyQuantificationBase,
+)
+from src.uncertainty_quantification_basic_single import (
+    UncertaintyQuantificationBasicSingleConfig,
+    UncertaintyQuantificationBasicSingle,
+)
+from src.uncertainty_quantification_regression import (
+    UncertaintyQuantificationRegressionHF,
+)
+from src.mole.deberta.ops import StableDropout
 
-@dataclass(kw_only=True)
-class UncertaintyQuantificationVariationalLoraConfig(
-    UncertaintyQuantificationBaseConfig
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+@dataclass
+class UncertaintyQuantificationMCDropoutConfig(
+    UncertaintyQuantificationBasicSingleConfig
 ):
-    optimizer_type: str = "adam"
-    learning_rate: float = 0.001
-    batch_size: int = 100
-    finetune_type: str = "lora"
-    base_lora_config: dict = field(default_factory=dict)
-    """Defined in config file"""
-    additional_lora_config: dict = field(default_factory=dict)
-    """Defined in finetune function"""
-    base_pretrained_model_config: dict = field(default_factory=dict)
-    """Defined in config file"""
-    additional_pretrained_model_config: dict = field(default_factory=dict)
-    """Defined in finetune function"""
-    base_mfvi_config: dict = field(default_factory=dict)
-    additional_mfvi_config: dict = field(default_factory=dict)
-    sequence_classifier_type: str = "default"
+    dropout_rate: float = 0.1
+    num_mc_samples: int = 50
 
 
-class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
+class UncertaintyQuantificationMCDropoutSingle(UncertaintyQuantificationBase):
+    def __init__(self, config: UncertaintyQuantificationMCDropoutConfig):
+        super().__init__(config)
+
+        self.config: UncertaintyQuantificationMCDropoutConfig
 
     def _load_finetune_model(self):
-        mfvi_config_list = {
-            **self.config.base_mfvi_config,
-            **self.config.additional_mfvi_config,
-        }
-
-        self.mfvi_config = MFVIConfig(**mfvi_config_list)
-
         if self.config.model_type == "molformer":
             self._load_molformer_model()
         elif self.config.model_type == "molbert":
@@ -104,12 +91,8 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             self._load_mole_model()
         else:
             raise ValueError(f"Unrecognised model type: {self.config.model_type}")
+
         self._add_finetune_method()
-
-        self.add_variational_layers()
-
-        print("LOAD DIR")
-        print(self.load_model_dir)
 
         self.finetune_model.restore()
 
@@ -122,21 +105,17 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             raise ValueError(
                 f"Unrecognised sequence classifier type: {self.config.sequence_classifier_type}"
             )
-        self.finetune_model = VariationalMolformerSingle(
+
+        self.finetune_model = MolformerDeepchem(
             task=self.deepchem_task_type,
             model_dir=self.load_model_dir,
             load_path=self.molformer_load_path,
+            from_pretrained_molformer=self.from_pretrained_molformer,
             n_tasks=self.config.n_tasks,
             config=self.molformer_config_dict,
-            optimizer=get_optimizer(
-                self.config.optimizer_type, self.config.learning_rate
-            ),
-            learning_rate=self.config.learning_rate,
             batch_size=self.config.batch_size,
-            mfvi_config=self.mfvi_config,
-            train_dataset_size=None,
-            sequence_classifier=sequence_classifier,
             num_labels=self.config.num_labels,
+            sequence_classifier=sequence_classifier,
         )
 
     def _load_molformer_model(self):
@@ -167,18 +146,12 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
                 f"Unrecognised sequence classifier type: {self.config.sequence_classifier_type}"
             )
 
-        self.finetune_model = VariationalMolbertSingle(
+        self.finetune_model = MolbertDeepchem(
             task=self.deepchem_task_type,
             model_dir=self.load_model_dir,
             n_tasks=self.config.n_tasks,
             config=self.molbert_config_dict,
-            optimizer=get_optimizer(
-                self.config.optimizer_type, self.config.learning_rate
-            ),
-            learning_rate=self.config.learning_rate,
             batch_size=self.config.batch_size,
-            mfvi_config=self.mfvi_config,
-            train_dataset_size=None,
             sequence_classifier=sequence_classifier,
             num_labels=self.config.num_labels,
         )
@@ -203,7 +176,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
                 f"Unrecognised sequence classifier type: {self.config.sequence_classifier_type}"
             )
 
-        self.finetune_model = VariationalMoleSingle(
+        self.finetune_model = MolEDeepchem(
             task=self.deepchem_task_type,
             model_dir=self.load_model_dir,
             n_tasks=self.config.n_tasks,
@@ -211,8 +184,6 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             batch_size=self.config.batch_size,
             num_labels=self.config.num_labels,
             sequence_classifier=sequence_classifier,
-            mfvi_config=self.mfvi_config,
-            train_dataset_size=None,
         )
 
     def _load_mole_model(self):
@@ -220,8 +191,8 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             **self.config.base_pretrained_model_config,
             **self.config.additional_pretrained_model_config,
         }
-        self.mole_config = MolEExtraConfig(**pretrained_model_config)
         self.mole_config_dict = pretrained_model_config
+        self.mole_config = MolEExtraConfig(**pretrained_model_config)
 
         self._instantiate_mole()
 
@@ -247,7 +218,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
 
     def _classifier_only_method(self):
         pass
-    
+
     def _freeze_early_layers_method(self):
         pass
 
@@ -257,32 +228,16 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
     def _add_finetune_method(self):
         if self.config.finetune_type == "lora":
             self._lora_method()
-
-
-    def add_variational_layers(self):
-        if self.mfvi_config.target_all_modules:
-            _replace_all_linear_submodules(
-                module=self.finetune_model.model,
-                new_layer=MFVILinear,
-                device=self.finetune_model.device,
-                EPS=self.mfvi_config.eps,
-            )
-        else:
-            for target_submodule_name in self.mfvi_config.mfvi_target_modules:
-                _replace_linear_submodule(
-                    module=self.finetune_model.model,
-                    submodule_name=target_submodule_name,
-                    new_layer=MFVILinear,
-                    device=self.finetune_model.device,
-                    EPS=self.mfvi_config.eps,
-                )
-
+            
     @torch.no_grad()
-    def predict_mean_and_std_on_batch(self, inputs, compute_std: bool = False):
+    def predict_mean_and_std_on_batch(
+        self, inputs, compute_std: bool = False, **kwargs
+    ):
         self.finetune_model.model.eval()
+        self.enable_dropout(self.config.dropout_rate)
 
         if self.config.sequence_classifier_type == "default":
-            if self.finetune_model.mfvi_config.samples_per_prediction == 1:
+            if self.config.num_mc_samples == 1:
                 if compute_std:
                     raise ValueError("Cannot compute std with sample size 1")
                 else:
@@ -292,7 +247,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
 
             model_prediction_mean = []
 
-            for _ in range(self.finetune_model.mfvi_config.samples_per_prediction):
+            for _ in range(self.config.num_mc_samples):
                 model_prediction_mean.append(
                     self.finetune_model.model(**inputs).get("logits")
                 )
@@ -314,7 +269,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
 
                 ensemble_sample_variance = torch.div(
                     ensemble_sample_variance,
-                    self.finetune_model.mfvi_config.samples_per_prediction - 1,
+                    self.config.num_mc_samples - 1,
                 )
 
                 ensemble_std = torch.sqrt(ensemble_sample_variance)
@@ -324,7 +279,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             )
 
         elif self.config.sequence_classifier_type == "likelihood":
-            if self.finetune_model.mfvi_config.samples_per_prediction == 1:
+            if self.config.num_mc_samples == 1:
                 outputs = self.finetune_model.model(**inputs)
                 return UncertaintyRegressionPredictionOutput(
                     mean=outputs.get("logits"), std=outputs.get("std_logits")
@@ -333,7 +288,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
             model_prediction_mean = []
             model_prediction_std = []
 
-            for _ in range(self.finetune_model.mfvi_config.samples_per_prediction):
+            for _ in range(self.config.num_mc_samples):
                 model_output = self.finetune_model.model(**inputs)
                 model_prediction_mean.append(model_output.get("logits").unsqueeze(1))
                 model_prediction_std.append(model_output.get("std_logits").unsqueeze(1))
@@ -357,7 +312,7 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
 
                 ensemble_mean_sample_variance = torch.div(
                     ensemble_mean_sample_variance,
-                    self.finetune_model.mfvi_config.samples_per_prediction - 1,
+                    self.config.num_mc_samples - 1,
                 )
 
                 ensemble_std = torch.sqrt(
@@ -368,31 +323,68 @@ class UncertaintyQuantificationVariational(UncertaintyQuantificationBase):
                 mean=ensemble_mean, std=ensemble_std
             )
 
-class UncertaintyQuantificationVariationalLoraRegression(
-    UncertaintyQuantificationVariational, UncertaintyQuantificationRegressionHF
+        else:
+            raise ValueError(
+                f"Unrecognised sequence classifier type: {self.config.sequence_classifier_type}"
+            )
+
+    def enable_dropout(self, dropout_rate: float):
+        """
+        Enable dropout in the module by setting the dropout layers to training mode.
+        """
+        for module in self.finetune_model.model.modules():
+            if isinstance(module, nn.Dropout):
+                module.train()
+                module.p = dropout_rate
+            if isinstance(module, StableDropout):
+                module.train()
+                module.drop_prob = dropout_rate
+
+
+class UncertaintyQuantificationMCDropoutRegression(
+    UncertaintyQuantificationMCDropoutSingle, UncertaintyQuantificationRegressionHF
 ):
     pass
 
-def uncertainty_quantification_mfvi_model(
-    metric_string_list: list[str] = ["ece"], problem_type="regression", **kwargs
+
+def uncertainty_quantification_mc_dropout_single(
+    metric_string_list: list[str] = ["ece"],
+    problem_type="regression",
+    dataset_type: Literal["test", "val"] = "test",
+    **kwargs,
 ):
-    config = UncertaintyQuantificationVariationalLoraConfig(**kwargs)
+    config = UncertaintyQuantificationMCDropoutConfig(**kwargs)
 
     if problem_type == "regression":
-        uncertainty_quantifier = UncertaintyQuantificationVariationalLoraRegression(
-            config
-        )
+        uncertainty_quantifier = UncertaintyQuantificationMCDropoutRegression(config)
         scores = {}
         if "ece" in metric_string_list:
             ece = uncertainty_quantifier.regression_expected_calibration_error(
-                dataset=uncertainty_quantifier.test_dataset
+                dataset=(
+                    uncertainty_quantifier.test_dataset
+                    if dataset_type == "test"
+                    else uncertainty_quantifier.val_dataset
+                )
             )
             scores.update({"ece_score": ece})
         if "nll" in metric_string_list:
             nll = uncertainty_quantifier.gaussian_negative_log_likelihood(
-                dataset=uncertainty_quantifier.test_dataset
+                dataset=(
+                    uncertainty_quantifier.test_dataset
+                    if dataset_type == "test"
+                    else uncertainty_quantifier.val_dataset
+                )
             )
             scores.update({"nll_score": nll})
+        if "rms" in metric_string_list:
+            rms = uncertainty_quantifier.root_mean_squared_error(
+                dataset=(
+                    uncertainty_quantifier.test_dataset
+                    if dataset_type == "test"
+                    else uncertainty_quantifier.val_dataset
+                )
+            )
+            scores.update({"rms_score": rms})
 
         return scores
     else:
