@@ -1,31 +1,14 @@
-from typing import Optional, Iterable, Callable, Dict, Literal
-from dataclasses import dataclass, field
-import numpy as np
-import json
+from typing import Literal
+from dataclasses import dataclass
 import os
 
 import torch
 import torch.nn as nn
 
-from transformers.models.roberta.modeling_roberta import (
-    RobertaForSequenceClassification,
-)
-from transformers.modeling_outputs import SequenceClassifierOutput
+from peft import get_peft_model, LoraConfig, TaskType
 
-from deepchem.data import Dataset
-from deepchem.utils.typing import OneOrMany
+from src.utils import create_file_path_string
 
-from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
-
-from src.dataset_tasks import get_dataset_task
-from src.utils import (
-    tensor_to_numpy,
-    set_seed,
-    create_file_path_string,
-    load_yaml_config,
-)
-from src.training_utils import get_finetuning_datasets, get_optimizer
-from src.deepchem_hf_models import HuggingFaceModel
 from src.model_molformer import (
     MolformerDeepchem,
     MolformerConfig,
@@ -51,22 +34,15 @@ from src.uncertainty_quantification_regression import (
 )
 
 from src.uncertainty_quantification import (
-    UncertaintyQuantificationBaseConfig,
     UncertaintyQuantificationBase,
 )
 from src.uncertainty_quantification_basic_single import (
     UncertaintyQuantificationBasicSingleConfig,
-    UncertaintyQuantificationBasicSingle,
 )
 from src.uncertainty_quantification_regression import (
     UncertaintyQuantificationRegressionHF,
 )
 from src.mole.deberta.ops import StableDropout
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 
 @dataclass
 class UncertaintyQuantificationMCDropoutConfig(
@@ -228,7 +204,7 @@ class UncertaintyQuantificationMCDropoutSingle(UncertaintyQuantificationBase):
     def _add_finetune_method(self):
         if self.config.finetune_type == "lora":
             self._lora_method()
-            
+    
     @torch.no_grad()
     def predict_mean_and_std_on_batch(
         self, inputs, compute_std: bool = False, **kwargs

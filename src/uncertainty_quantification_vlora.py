@@ -1,20 +1,9 @@
-from typing import Union, Dict, Callable
 from dataclasses import dataclass, field
 import torch
-import torch.nn as nn
-import json
 import os
 
-import numpy as np
-
-from transformers.models.roberta.modeling_roberta import (
-    RobertaForSequenceClassification,
-)
-from deepchem.data import Dataset
 from peft import get_peft_model, LoraConfig, TaskType
 
-from transformers.modeling_outputs import SequenceClassifierOutput
-from deepchem.utils.typing import OneOrMany
 
 from src.uncertainty_quantification import (
     UncertaintyQuantificationBaseConfig,
@@ -23,7 +12,6 @@ from src.uncertainty_quantification import (
 from src.uncertainty_quantification_regression import (
     UncertaintyQuantificationRegressionHF,
     UncertaintyRegressionPredictionOutput,
-    generate_reliability_plot_regression,
 )
 from src.variational_inference.variational_layer import MFVILinear
 from src.variational_model import (
@@ -35,7 +23,6 @@ from src.variational_model import (
 
 from src.finetune_mfvi_single import (
     _replace_linear_submodule,
-    get_mfvi_lora_target_modules,
     _replace_all_linear_submodules,
 )
 
@@ -43,11 +30,6 @@ from src.model_molformer import (
     MolformerConfig,
     MolformerForSequenceClassification,
     MolformerForSequenceClassificationLikelihoodLoss,
-)
-from src.likelihood_model import (
-    RobertaLikelihoodClassificationHead,
-    RobertaLikelihoodClassificationHeadCustomActivation,
-    MolformerLikelihoodClassificationHead,
 )
 from src.model_molbert import (
     MolbertForSequenceClassification,
@@ -61,9 +43,8 @@ from src.model_mole import (
 )
 
 from src.training_utils import get_optimizer
-from src.utils import create_file_path_string, tensor_to_numpy
+from src.utils import create_file_path_string
 
-from src.dataset_tasks import get_dataset_task
 
 @dataclass(kw_only=True)
 class UncertaintyQuantificationVariationalLoraConfig(

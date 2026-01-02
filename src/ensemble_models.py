@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Tuple, Union, Literal, List, Callable, Iterable, Any
 from collections.abc import Sequence as SequenceCollection
 import logging
@@ -7,19 +7,15 @@ import time
 
 import torch
 import torch.nn as nn
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
-from transformers.modeling_utils import PreTrainedModel
 from transformers.modeling_outputs import (
-    BaseModelOutputWithPoolingAndCrossAttentions,
     SequenceClassifierOutput,
 )
 from transformers.models.roberta.modeling_roberta import (
     RobertaConfig,
     RobertaForSequenceClassification,
 )
-from transformers.models.auto import AutoModelForSequenceClassification
-from transformers.tokenization_utils import PreTrainedTokenizer
+
 
 from deepchem.data import Dataset
 from deepchem.utils.typing import LossFn, OneOrMany
@@ -30,10 +26,8 @@ from src.deepchem_hf_models import HuggingFaceModel
 from src.likelihood_model import LikelihoodSequenceClassifierOutput
 
 from src.uncertainty_quantification_regression import (
-    UncertaintyQuantificationRegressionHF,
     UncertaintyRegressionPredictionOutput,
     UncertaintyRegressionModel,
-    UncertaintyRegressionPredictionOutputNumpy,
 )
 
 from src.model_molformer import (

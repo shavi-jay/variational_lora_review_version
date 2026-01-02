@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, asdict
 from typing import Optional, Tuple, Union, Dict, Any
 import torch
@@ -8,8 +7,7 @@ from torch.nn import CrossEntropyLoss, MSELoss, BCEWithLogitsLoss
 
 from src.molbert.base import MolbertPretrainedModel, BertConfigExtras
 from src.molbert.tokenizer import MolbertTokenizer
-from src.utils import create_file_path_string, path_to_local_data
-from src.training_utils import get_activation_function
+from src.utils import path_to_local_data
 from src.basic_classifier_heads import (
     RobertaClassificationHeadCustomActivation,
     MolformerClassificationHead,

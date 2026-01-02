@@ -1,5 +1,5 @@
 from typing import Optional, Iterable, Literal
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
@@ -15,15 +15,11 @@ import seaborn as sns
 from deepchem.data import Dataset
 from deepchem.utils.typing import OneOrMany
 
-from src.deepchem_hf_models import HuggingFaceModel
-
 from src.utils import (
     tensor_to_numpy,
-    set_seed,
     create_file_path_string,
     load_yaml_config,
 )
-from src.training_utils import get_finetuning_datasets
 
 from src.uncertainty_quantification import (
     UncertaintyQuantificationBase,

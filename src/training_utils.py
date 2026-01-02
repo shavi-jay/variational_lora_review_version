@@ -3,7 +3,6 @@ from typing import Optional, Union, Iterable, Tuple, List
 from dataclasses import dataclass, field
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import deepchem as dc
 from deepchem.data import Dataset
 from deepchem.metrics import (

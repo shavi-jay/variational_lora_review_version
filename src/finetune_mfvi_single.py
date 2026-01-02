@@ -1,11 +1,5 @@
-import numpy as np
-import os
-import types
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.distributions as dist
 
 from src.finetune_basic_single import FinetuneSingleModelConfig, FinetunerSingleModel
 from src.deepchem_hf_models import HuggingFaceModel
@@ -16,9 +10,6 @@ from src.model_molformer import (
 from src.model_molbert import (
     MolbertForSequenceClassification,
     MolbertForSequenceClassificationLikelihoodLoss,
-)
-from transformers.models.roberta.modeling_roberta import (
-    RobertaForSequenceClassification,
 )
 from src.model_mole import (
     MolEForSequenceClassification,

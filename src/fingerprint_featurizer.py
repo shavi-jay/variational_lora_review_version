@@ -12,7 +12,6 @@ from deepchem.feat.base_classes import MolecularFeaturizer
 from deepchem.utils.rdkit_utils import DescriptorsNormalizationParameters as DNP
 
 from rdkit.Chem import rdFingerprintGenerator
-from rdkit.Chem import MolToSmiles
 
 import logging
 

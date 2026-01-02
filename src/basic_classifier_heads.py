@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 import torch.nn as nn
 
 from src.training_utils import get_activation_function

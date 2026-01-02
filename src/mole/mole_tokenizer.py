@@ -1,9 +1,7 @@
 from src.mole.datasets import MOLE_VOCAB_PATH, open_dictionary, getAtomEnvironments
 from scipy import sparse
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from rdkit.Chem import rdFingerprintGenerator
-import os
 import numpy as np
 import torch
 from torch_geometric.data import Data, Batch

@@ -1,20 +1,14 @@
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple
 from dataclasses import dataclass
 import torch
 import torch.nn as nn
 from torch.nn import (
     BCEWithLogitsLoss,
     CrossEntropyLoss,
-    MSELoss,
 )
 
 from transformers.models.roberta.configuration_roberta import RobertaConfig
 from transformers.modeling_outputs import ModelOutput
-from transformers.utils import (
-    add_start_docstrings,
-    add_start_docstrings_to_model_forward,
-    add_code_sample_docstrings,
-)
 
 from src.basic_classifier_heads import ClassifierHeadConfig
 from src.training_utils import get_activation_function

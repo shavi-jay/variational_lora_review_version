@@ -1,4 +1,3 @@
-from typing import Union
 from dataclasses import dataclass, field
 import numpy as np
 import torch
@@ -13,17 +12,11 @@ from src.uncertainty_quantification_regression import (
     UncertaintyRegressionPredictionOutput,
     UncertaintyRegressionPredictionOutputNumpy,
 )
-from src.uncertainty_quantification import (
-    UncertaintyQuantificationBase,
-    UncertaintyQuantificationBaseConfig,
-)
+from src.uncertainty_quantification import UncertaintyQuantificationBaseConfig
 
-from xgboost import XGBClassifier, XGBRegressor, XGBModel
 from ngboost import NGBClassifier, NGBRegressor, NGBoost
-from sklearn.neural_network import MLPRegressor, MLPClassifier
 
 from deepchem.data import Dataset
-from deepchem.feat import Featurizer, RDKitDescriptors, MACCSKeysFingerprint
 
 from src.training_utils import get_load_func
 

@@ -2,7 +2,6 @@ import copy
 
 import torch
 
-from src.mole.deberta.config import ModelConfig
 from src.mole.deberta.cache_utils import load_model_state
 from src.mole.bert import BertEmbeddings, BertEncoder
 

@@ -1,51 +1,16 @@
-from typing import Optional, Iterable, Callable, Dict
 from dataclasses import dataclass, field
-import numpy as np
-import json
-import os
 
-import torch
-import torch.nn as nn
-s
-from transformers.modeling_outputs import SequenceClassifierOutput
+from peft import get_peft_model, LoraConfig, TaskType
 
-from deepchem.data import Dataset
-from deepchem.utils.typing import OneOrMany
-
-from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
-
-from src.dataset_tasks import get_dataset_task
-from src.utils import (
-    tensor_to_numpy,
-    set_seed,
-    create_file_path_string,
-    load_yaml_config,
-)
-from src.training_utils import get_finetuning_datasets, get_optimizer
-from src.deepchem_hf_models import HuggingFaceModel
-from src.model_molformer import (
-    MolformerDeepchem,
-    MolformerConfig,
-    MolformerForSequenceClassification,
-    MolformerForSequenceClassificationLikelihoodLoss,
-    DEFAULT_MOLFORMER_PATH,
-)
-from src.model_molbert import (
-    MolbertForSequenceClassification,
-    MolbertForSequenceClassificationLikelihoodLoss,
-    MolbertDeepchem,
-    MolbertConfig,
-    DEFAULT_MOLBERT_PATH,
-)
+from src.model_molformer import MolformerConfig, DEFAULT_MOLFORMER_PATH
+from src.model_molbert import MolbertConfig, DEFAULT_MOLBERT_PATH,
 from src.model_mole import MolEExtraConfig, DEFAULT_MOLE_PATH
 
 from src.uncertainty_quantification_regression import (
     UncertaintyQuantificationRegressionHF,
-    UncertaintyRegressionPredictionOutput,
 )
 
 from src.uncertainty_quantification import (
-    UncertaintyQuantificationBaseConfig,
     UncertaintyQuantificationBase,
 )
 from src.uncertainty_quantification_basic_single import (
@@ -53,12 +18,6 @@ from src.uncertainty_quantification_basic_single import (
 )
 
 from src.ensemble_models import BasicEnsembleModelConfig, DeepChemBasicEnsembleModel
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-
 @dataclass(kw_only=True)
 class UncertaintyQuantificationBasicEnsembleConfig(
     UncertaintyQuantificationBasicSingleConfig
@@ -74,9 +33,7 @@ class UncertaintyQuantificationBasicEnsemble(UncertaintyQuantificationBase):
         self.config: UncertaintyQuantificationBasicEnsembleConfig
 
     def _load_finetune_model(self):
-        if self.config.model_type == "chemberta":
-            self._load_chemberta_model()
-        elif self.config.model_type == "molformer":
+        if self.config.model_type == "molformer":
             self._load_molformer_model()
         elif self.config.model_type == "molbert":
             self._load_molbert_model()

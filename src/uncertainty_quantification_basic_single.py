@@ -1,31 +1,12 @@
-from typing import Optional, Iterable, Callable, Dict, Literal
+from typing import Literal
 from dataclasses import dataclass, field
-import numpy as np
-import json
 import os
 
 import torch
-import torch.nn as nn
 
-from transformers.models.roberta.modeling_roberta import (
-    RobertaForSequenceClassification,
-)
-from transformers.modeling_outputs import SequenceClassifierOutput
+from peft import get_peft_model, LoraConfig, TaskType
 
-from deepchem.data import Dataset
-from deepchem.utils.typing import OneOrMany
-
-from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
-
-from src.dataset_tasks import get_dataset_task
-from src.utils import (
-    tensor_to_numpy,
-    set_seed,
-    create_file_path_string,
-    load_yaml_config,
-)
-from src.training_utils import get_finetuning_datasets, get_optimizer
-from src.deepchem_hf_models import HuggingFaceModel
+from src.utils import create_file_path_string
 from src.model_molformer import (
     MolformerDeepchem,
     MolformerConfig,
@@ -55,11 +36,6 @@ from src.uncertainty_quantification import (
     UncertaintyQuantificationBaseConfig,
     UncertaintyQuantificationBase,
 )
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 
 @dataclass
 class UncertaintyQuantificationBasicSingleConfig(UncertaintyQuantificationBaseConfig):

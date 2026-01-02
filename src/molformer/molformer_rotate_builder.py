@@ -2,10 +2,7 @@
 From molformer repo
 """
 
-from torch.nn import LayerNorm
-
 from fast_transformers.transformers import TransformerEncoder, TransformerEncoderLayer
-from fast_transformers.builders.base import BaseBuilder
 from fast_transformers.builders.transformer_builders import (
     BaseTransformerEncoderBuilder,
 )

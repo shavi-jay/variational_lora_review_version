@@ -1,22 +1,9 @@
 import logging
-from abc import abstractmethod
-from argparse import Namespace
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional
 
 import torch
 from torch import nn
-from torch.optim.lr_scheduler import (
-    ReduceLROnPlateau,
-    CosineAnnealingWarmRestarts,
-    StepLR,
-)
-from torch.utils.data.dataloader import DataLoader
 from transformers import (
-    AdamW,
-    get_linear_schedule_with_warmup,
-    get_cosine_schedule_with_warmup,
-    get_constant_schedule_with_warmup,
-    get_cosine_with_hard_restarts_schedule_with_warmup,
     BertPreTrainedModel,
     BertModel,
     BertConfig,

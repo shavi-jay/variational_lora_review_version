@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
 import torch
-import torch.nn as nn
 
 from typing import Optional
 
@@ -13,8 +12,7 @@ from src.model_molformer import MolformerDeepchem
 from src.model_molbert import MolbertDeepchem
 from src.model_mole import MolEDeepchem
 
-from src.variational_inference.variational_layer import MFVILinear
-from src.utils import short_timer, return_short_time
+from src.utils import return_short_time
 
 
 @dataclass

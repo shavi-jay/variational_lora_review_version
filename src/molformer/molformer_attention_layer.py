@@ -3,10 +3,9 @@ output projections leaving the implementation of the attention to the inner
 attention module.
 """
 
-from torch.nn import Linear, Module
 
 from fast_transformers.attention import AttentionLayer
-from fast_transformers.events import EventDispatcher, QKVEvent
+from fast_transformers.events import QKVEvent
 from src.molformer.molformer_rotary import RotaryEmbedding, apply_rotary_pos_emb
 
 

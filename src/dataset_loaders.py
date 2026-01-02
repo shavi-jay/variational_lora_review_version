@@ -10,15 +10,11 @@ from deepchem.molnet.load_function.molnet_loader import (
     TransformerGenerator,
     _MolnetLoader,
 )
-from deepchem.data import Dataset, DiskDataset
-from deepchem.molnet.load_function.clintox_datasets import _ClintoxLoader
-from deepchem.molnet.load_function.toxcast_datasets import _ToxcastLoader
-from deepchem.molnet.load_function.bbbp_datasets import _BBBPLoader
-from deepchem.molnet.load_function.tox21_datasets import _Tox21Loader
+from deepchem.data import Dataset
 from typing import List, Optional, Tuple, Union
 
 from src.utils import create_file_path_string, path_to_local_data
-from src.dataset_tasks import get_dataset_task, ADME_HCLINT_TASKS
+from src.dataset_tasks import get_dataset_task
 
 
 ADME_HCLINT_PATH = path_to_local_data(

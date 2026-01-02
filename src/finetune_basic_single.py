@@ -4,16 +4,9 @@ import json
 from typing import Callable, Dict, Literal
 from dataclasses import dataclass, field
 from typing import Optional
-import pandas as pd
-import deepchem as dc
-from deepchem.metrics import Metric, mae_score, rms_score, accuracy_score
-from deepchem.feat import RawFeaturizer, DummyFeaturizer
 from deepchem_hf_models import HuggingFaceModel
 
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
-from transformers.models.roberta.modeling_roberta import (
-    RobertaForSequenceClassification,
-)
 
 from src.model_molformer import (
     MolformerDeepchem,
@@ -35,7 +28,6 @@ from src.model_mole import (
 )
 from src.utils import set_seed, create_file_path_string, short_timer
 from src.training_utils import (
-    get_load_func,
     get_wandb_logger,
     count_parameters,
     get_finetuning_datasets,

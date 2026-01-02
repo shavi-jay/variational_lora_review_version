@@ -3,7 +3,6 @@ from typing import Union
 import numpy as np
 
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.base import RegressorMixin, ClassifierMixin
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -12,10 +11,9 @@ from sklearn.metrics import (
 )
 from xgboost import XGBClassifier, XGBRegressor
 from ngboost import NGBClassifier, NGBRegressor
-from sklearn.neural_network import MLPRegressor, MLPClassifier
 
 from deepchem.data import Dataset
-from deepchem.feat import Featurizer, RDKitDescriptors, MACCSKeysFingerprint
+from deepchem.feat import RDKitDescriptors
 
 from src.training_utils import get_load_func
 from src.fingerprint_featurizer import (
