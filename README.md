@@ -36,7 +36,7 @@ source vlora/bin/activate
 python --version  # should show Python 3.10.x
 ```
 
-### 3) Install libraries from requirements.txt via pip
+#### 3) Install libraries from requirements.txt via pip
 
 Upgrade pip (optional but recommended):
 
