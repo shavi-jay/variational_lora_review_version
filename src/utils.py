@@ -66,3 +66,30 @@ def path_to_local_data(path: str) -> str:
     abs_path = os.path.abspath(os.path.dirname(__file__))
     local_data_path = os.path.join(Path(abs_path).parents[0], "local_data", path)
     return local_data_path
+
+@contextmanager
+def short_timer(timer_name: str = "Timer"):
+    t0 = time.perf_counter()
+    try:
+        yield
+    finally:
+        t1 = time.perf_counter()
+        elapsed = t1 - t0
+        print(f"{timer_name} :{elapsed:0.4f}")
+
+
+class ShortTimer:
+    def __init__(self):
+        self.time = 0
+
+
+@contextmanager
+def return_short_time():
+    t0 = time.perf_counter()
+    timer = ShortTimer()
+    try:
+        yield timer
+    finally:
+        t1 = time.perf_counter()
+        elapsed = t1 - t0
+        timer.time = elapsed
