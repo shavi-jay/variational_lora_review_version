@@ -25,6 +25,7 @@ class MFVIConfig:
     mfvi_target_modules: list[str] = field(default_factory=list)
     time_kl: bool = False
     samples_per_prediction: int = 10
+    mean_kl: bool = True  # if False, sum raw KL instead of dividing by num_parameters
 
 
 class VariationalModel(HuggingFaceModel):
@@ -107,7 +108,9 @@ class VariationalModel(HuggingFaceModel):
             if hasattr(module, "kl_divergence"):
                 kl = kl + module.kl_divergence()
                 num_parameters += module.num_parameters
-        return kl / num_parameters
+        if self.mfvi_config.mean_kl:
+            return kl / num_parameters
+        return kl
 
     @property
     def mean_kl_time(self):
